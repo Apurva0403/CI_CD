@@ -1,0 +1,95 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_IMAGE = "apurva0409/html-demo:latest"
+    }
+
+    stages {
+
+        stage('Clone Code') {
+            steps {
+                git branch: 'main',
+                url: 'https://github.com/Apurva0403/BasicCICDDocker.git'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                bat 'docker build -t %DOCKER_IMAGE% .'
+            }
+        }
+
+        stage('Push Image') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub',
+                    usernameVariable: 'USER',
+                    passwordVariable: 'PASS')]) {
+
+                    bat '''
+                    docker login -u %USER% -p %PASS%
+                    docker push %DOCKER_IMAGE%
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                withCredentials([file(
+                    credentialsId: 'k8s-config',
+                    variable: 'KUBECONFIG')]) {
+
+                    bat '''
+                    set KUBECONFIG=%KUBECONFIG%
+                    kubectl apply -f deployment.yaml --validate=false
+                    kubectl get pods
+                    '''
+                }
+            }
+        }
+    }
+}
+
+
+
+
+#2nd code 
+
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_IMAGE = "apurva0409/apurvapro1"
+    }
+
+    stages {
+
+        stage('Clone Code') {
+            steps {
+                git branch: 'main',
+                url: 'https://github.com/Apurva0403/ApurvaPro1.git'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                bat 'docker build -t %DOCKER_IMAGE% .'
+            }
+        }
+
+        stage('Push Image') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub', 
+                    usernameVariable: 'USER', 
+                    passwordVariable: 'PASS')]) {
+                    
+                    bat 'docker login -u %USER% -p %PASS%'
+                    bat 'docker push %DOCKER_IMAGE%'
+                }
+            }
+        }
+    }
+}
